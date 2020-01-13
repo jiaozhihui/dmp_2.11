@@ -20,6 +20,19 @@ class ConfUtils(confFile:String) extends Serializable {
   val adxStreamingRedisPassword = load.getString("adx.streaming.redis.password")
   val adxStreamingRedisDB = load.getInt("adx.streaming.redis.db")
 
+  // es
+  val adxStreamingEsHost = load.getString("adx.streaming.es.host")
+  val adxStreamingEsUser = load.getString("adx.streaming.es.user")
+  val adxStreamingEsPassword = load.getString("adx.streaming.es.password")
 
+  // mysql
+  val adxStreamingMysqlHost = load.getString("adx.streaming.mysql.host")
+  val adxStreamingMysqlUser = load.getString("adx.streaming.mysql.user")
+  val adxStreamingMysqlPassword = load.getString("adx.streaming.mysql.password")
+
+//  hdfs
+  val adxBatchHDFSHost = load.getString("adx.batch.hdfs.host")
+
+  var nowTime = "0"
 
 }
