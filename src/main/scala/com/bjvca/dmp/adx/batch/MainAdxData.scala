@@ -1,9 +1,9 @@
 package com.bjvca.dmp.adx.batch
 
-object AdxDataMain {
+object MainAdxData {
 
   def main(args: Array[String]): Unit = {
-    print("asdf")
+    AdxDataPvSuccessAll.getRpt()
   }
 
 }

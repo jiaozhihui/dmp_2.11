@@ -40,7 +40,7 @@ object AdxDataPvFailAll extends Logging {
       """
         |SELECT
         |SUBSTRING_INDEX(DSPName,'_',-1) as dsp_id,
-        |CONCAT(`local-month`,`local-day`) as daytime,
+        |CONCAT(left(`local-month`,4),"-",right(`local-month`,2),"-",first(`local-day`)) as daytime,
         |FIRST(media_channel_id) as media_channel_id,
         |SUBSTRING_INDEX(FIRST(options.body.imp[0].tagid),'_',-1) as tag_id_channel,
         |IFNULL(SUM(isReturn),0) as return,
@@ -124,6 +124,8 @@ object AdxDataPvFailAll extends Logging {
       })
 
     logWarning("写入adx_data_pv_fail成功")
+
+    sparkSql.stop()
 
   }
 }

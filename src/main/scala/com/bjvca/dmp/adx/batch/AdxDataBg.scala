@@ -13,8 +13,8 @@ object AdxDataBg extends Logging {
 
     logWarning("AdxDataBg开始运行")
 
-//    val confUtil = new ConfUtils("application.conf")
-        val confUtil = new ConfUtils("线上application.conf")
+    val confUtil = new ConfUtils("application.conf")
+//        val confUtil = new ConfUtils("线上application.conf")
 
     confUtil.nowTime = new SimpleDateFormat("yyyyMMdd").format(new Date().getTime - 86400L * 1000)
     val nowMouth = confUtil.nowTime.substring(0, 6)
@@ -40,9 +40,12 @@ object AdxDataBg extends Logging {
       s"""
          |SELECT
          |dealid,
-         |CONCAT(first(`local-month`),first(`local-day`)) as daytime,
+         |CONCAT(left(first(`local-month`),4),"-",right(first(`local-month`),2),"-",first(`local-day`)) as daytime,
          |first(order_id) as order_id,
+         |first(main_order_id) as main_order_id,
+         |if(first(order_id)=first(main_order_id),0,1) as is_compensate,
          |first(media_channel_id) as media_channel_id,
+         |first(tag_id) as tag_id,
          |SUBSTRING_INDEX(first(tag_id),'_',-1) as tag_id_channel,
          |first(adx_material_id) as adx_material_id,
          |first(dsp_id) as dsp_id,
@@ -58,8 +61,11 @@ object AdxDataBg extends Logging {
         |a.dealid,
         |a.daytime,
         |a.order_id,
+        |a.main_order_id,
+        |a.is_compensate,
         |IFNULL(b.media_id,"000") AS media_id,
         |a.media_channel_id,
+        |a.tag_id,
         |a.tag_id_channel,
         |a.adx_material_id,
         |a.dsp_id,
@@ -73,8 +79,9 @@ object AdxDataBg extends Logging {
         var conn: Connection = null
         var ps: PreparedStatement = null
         val updateSQL =
-          """INSERT INTO adx_data_bg(dealid, `daytime`, order_id, media_id, media_channel_id, tag_id_channel, adx_material_id, dsp_id, advertiser_id, `total`)
-            |VALUES(?,?,?,?,?,?,?,?,?,?)
+          """INSERT INTO adx_data_bg(dealid, `daytime`, order_id, main_order_id, is_compensate, media_id, media_channel_id,
+            |tag_id, tag_id_channel, adx_material_id, dsp_id, advertiser_id, `total`)
+            |VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
             |ON DUPLICATE KEY UPDATE
             |`total`=?
             |""".stripMargin
@@ -90,14 +97,17 @@ object AdxDataBg extends Logging {
             ps.setString(1, it.getAs[String]("dealid"))
             ps.setString(2, it.getAs[String]("daytime"))
             ps.setString(3, it.getAs[String]("order_id"))
-            ps.setString(4, it.getAs[String]("media_id"))
-            ps.setString(5, it.getAs[String]("media_channel_id"))
-            ps.setString(6, it.getAs[String]("tag_id_channel"))
-            ps.setString(7, it.getAs[String]("adx_material_id"))
-            ps.setString(8, it.getAs[String]("dsp_id"))
-            ps.setString(9, it.getAs[String]("advertiser_id"))
-            ps.setInt(10, it.getAs[Long]("total").intValue())
-            ps.setInt(11, it.getAs[Long]("total").intValue())
+            ps.setString(4, it.getAs[String]("main_order_id"))
+            ps.setString(5, it.getAs[String]("is_compensate"))
+            ps.setString(6, it.getAs[String]("media_id"))
+            ps.setString(7, it.getAs[String]("media_channel_id"))
+            ps.setString(8, it.getAs[String]("tag_id"))
+            ps.setString(9, it.getAs[String]("tag_id_channel"))
+            ps.setString(10, it.getAs[String]("adx_material_id"))
+            ps.setString(11, it.getAs[String]("dsp_id"))
+            ps.setString(12, it.getAs[String]("advertiser_id"))
+            ps.setInt(13, it.getAs[Long]("total").intValue())
+            ps.setInt(14, it.getAs[Long]("total").intValue())
 
             ps.addBatch()
             row = row + 1

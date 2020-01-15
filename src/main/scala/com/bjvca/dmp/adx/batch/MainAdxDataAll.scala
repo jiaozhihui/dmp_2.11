@@ -1,6 +1,6 @@
 package com.bjvca.dmp.adx.batch
 
-object AdxDataAllMain {
+object MainAdxDataAll {
 
   def main(args: Array[String]): Unit = {
     AdxDataBgAll.getRpt()
