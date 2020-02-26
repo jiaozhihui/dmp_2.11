@@ -13,8 +13,8 @@ object AdxDataBgAll extends Logging {
 
     logWarning("AdxDataBgAll开始运行")
 
-//    val confUtil = new ConfUtils("application.conf")
-        val confUtil = new ConfUtils("线上application.conf")
+    val confUtil = new ConfUtils("application.conf")
+//        val confUtil = new ConfUtils("线上application.conf")
 
     val sparkSql = SparkSession.builder()
       .appName("AdxDataBgAll")
