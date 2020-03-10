@@ -1,7 +1,7 @@
 package com.bjvca.dmp.adx.structured
 
 import com.alibaba.fastjson.JSON
-import com.bjvca.dmp.commonutils.{ConfUtils, JedisPools}
+import com.bjvca.commonutils.{ConfUtils, JedisPools}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD

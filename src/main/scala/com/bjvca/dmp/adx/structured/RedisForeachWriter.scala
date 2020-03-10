@@ -1,6 +1,6 @@
 package com.bjvca.dmp.adx.structured
 
-import com.bjvca.dmp.commonutils.{ConfUtils, JedisPools}
+import com.bjvca.commonutils.{ConfUtils, JedisPools}
 import org.apache.spark.sql.ForeachWriter
 import redis.clients.jedis.Jedis
 

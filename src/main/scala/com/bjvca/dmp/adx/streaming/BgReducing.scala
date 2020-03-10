@@ -3,7 +3,7 @@ package com.bjvca.dmp.adx.streaming
 import java.sql.{Connection, DriverManager, PreparedStatement}
 
 import com.alibaba.fastjson.JSON
-import com.bjvca.dmp.commonutils.{ConfUtils, JedisPools, TableRegister}
+import com.bjvca.commonutils.{ConfUtils, JedisPools, TableRegister}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD

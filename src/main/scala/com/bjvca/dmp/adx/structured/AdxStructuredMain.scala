@@ -1,6 +1,6 @@
 package com.bjvca.dmp.adx.structured
 
-import com.bjvca.dmp.commonutils.ConfUtils
+import com.bjvca.commonutils.ConfUtils
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, ForeachWriter, SaveMode, SparkSession}

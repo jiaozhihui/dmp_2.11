@@ -1,4 +1,4 @@
-package com.bjvca.dmp.commonutils
+package com.bjvca.commonutils
 
 import org.apache.spark.sql.SparkSession
 

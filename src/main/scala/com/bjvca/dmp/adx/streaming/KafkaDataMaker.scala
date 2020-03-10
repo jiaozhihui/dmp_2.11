@@ -2,7 +2,7 @@ package com.bjvca.dmp.adx.streaming
 
 import java.util.Properties
 
-import com.bjvca.dmp.commonutils.ConfUtils
+import com.bjvca.commonutils.ConfUtils
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 object KafkaDataMaker {

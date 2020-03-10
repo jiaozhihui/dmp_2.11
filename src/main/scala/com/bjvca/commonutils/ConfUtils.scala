@@ -1,4 +1,4 @@
-package com.bjvca.dmp.commonutils
+package com.bjvca.commonutils
 
 import com.typesafe.config.ConfigFactory
 

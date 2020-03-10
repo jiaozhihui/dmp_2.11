@@ -3,7 +3,7 @@ package com.bjvca.dmp.adx.streaming
 import java.lang
 import java.text.SimpleDateFormat
 import java.util.Date
-import com.bjvca.dmp.commonutils.ConfUtils
+import com.bjvca.commonutils.ConfUtils
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
 import org.apache.spark.internal.Logging

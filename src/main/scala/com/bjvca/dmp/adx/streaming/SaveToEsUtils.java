@@ -1,6 +1,6 @@
 package com.bjvca.dmp.adx.streaming;
 
-import com.bjvca.dmp.commonutils.ConfUtils;
+import com.bjvca.commonutils.ConfUtils;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;

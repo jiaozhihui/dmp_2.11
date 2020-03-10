@@ -49,6 +49,14 @@
             <!--            <scope>provided</scope>-->
         </dependency>
 
+        <!-- spark to elasticsearch -->
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch-hadoop</artifactId>
+            <version>6.0.0</version>
+        </dependency>
+
+
         <!-- redis       -->
         <dependency>
             <groupId>redis.clients</groupId>

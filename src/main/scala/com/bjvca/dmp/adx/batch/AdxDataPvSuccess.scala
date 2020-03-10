@@ -3,7 +3,7 @@ package com.bjvca.dmp.adx.batch
 import java.sql.{Connection, DriverManager, PreparedStatement}
 import java.text.SimpleDateFormat
 import java.util.Date
-import com.bjvca.dmp.commonutils.{ConfUtils, TableRegister}
+import com.bjvca.commonutils.{ConfUtils, TableRegister}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 
