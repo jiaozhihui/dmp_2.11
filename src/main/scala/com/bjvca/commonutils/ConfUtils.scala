@@ -33,6 +33,16 @@ class ConfUtils(confFile:String) extends Serializable {
 //  hdfs
   val adxBatchHDFSHost = load.getString("adx.batch.hdfs.host")
 
+  // adseat
+  val adseatMysqlHost = load.getString("adseat.mysql.host")
+  val adseatMysqlUser = load.getString("adseat.mysql.user")
+  val adseatMysqlPassword = load.getString("adseat.mysql.password")
+
+  // videocut
+  val videocutMysqlHost = load.getString("videocut.mysql.host")
+  val videocutMysqlUser = load.getString("videocut.mysql.user")
+  val videocutMysqlPassword = load.getString("videocut.mysql.password")
+
   var nowTime = "0"
 
 }

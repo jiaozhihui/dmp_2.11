@@ -4,17 +4,26 @@ import com.alibaba.fastjson.{JSONArray, JSONObject}
 
 object JsonArrayTest {
   def main(args: Array[String]): Unit = {
-    val nObject = new JSONObject()
 
-    val array = new JSONArray()
-    array.add("x")
-    array.add("x")
-    array.add("x")
-    array.add("x")
+    val list = scala.collection.mutable.ListBuffer[JSONObject]()
 
-    nObject.put("a",array)
+    var aaa =new  JSONObject
 
-    println(nObject)
+    aaa.put("1","1")
+
+    list += aaa
+
+    println(list.toString())
+
+    aaa = null
+
+    println(list.toString())
+    list += aaa
+    println(list.toString())
+
+
+
+
 
   }
 

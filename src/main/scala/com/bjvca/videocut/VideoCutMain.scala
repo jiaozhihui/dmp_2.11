@@ -5,7 +5,6 @@ import com.bjvca.commonutils.ConfUtils
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.elasticsearch.spark._
-
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
@@ -14,10 +13,10 @@ object VideoCutMain extends Logging {
 
   def main(args: Array[String]): Unit = {
 
-    logWarning("VideoCutDemo开始运行")
+    logWarning("VideoCutMain开始运行")
 
-    //    val confUtil = new ConfUtils("application.conf")
-    val confUtil = new ConfUtils("线上application.conf")
+//    val confUtil = new ConfUtils("application.conf")
+        val confUtil = new ConfUtils("线上application.conf")
 
     // 创建sparkSession
     val spark = SparkSession.builder()
@@ -27,14 +26,24 @@ object VideoCutMain extends Logging {
 
     // 从mysql拿到数据，转化为json
     import spark.implicits._
-    val options = Map("url" -> s"jdbc:mysql://${confUtil.adxStreamingMysqlHost}:3306/ssp_db?characterEncoding=utf-8&useSSL=false",
-      "driver" -> "com.mysql.jdbc.Driver",
-      "dbtable" -> "ssp_ad_seat",
-      "user" -> confUtil.adxStreamingMysqlUser,
-      "password" -> confUtil.adxStreamingMysqlPassword)
 
     spark.read.format("jdbc")
-      .options(options)
+      .options(Map(
+        "url" -> s"jdbc:mysql://${confUtil.adseatMysqlHost}:3306/video_cut?characterEncoding=utf-8&useSSL=false",
+        "driver" -> "com.mysql.jdbc.Driver",
+        "user" -> confUtil.videocutMysqlUser,
+        "password" -> confUtil.videocutMysqlPassword,
+        "dbtable" -> "usable_media"
+      )).load()
+      .createOrReplaceTempView("bbb")
+
+    spark.read.format("jdbc")
+      .options(Map("url" -> s"jdbc:mysql://${confUtil.adseatMysqlHost}:3306/ssp_db?characterEncoding=utf-8&useSSL=false",
+        "driver" -> "com.mysql.jdbc.Driver",
+        "user" -> confUtil.adseatMysqlUser,
+        "password" -> confUtil.adseatMysqlPassword,
+        "dbtable" -> "ssp_ad_seat"
+      ))
       .load()
       // 视频id、视频名、
       // 开始时间、结束时间
@@ -47,19 +56,40 @@ object VideoCutMain extends Logging {
         $"drama_name", $"drama_type_name",
         $"media_area_name", $"media_release_date",
         $"class2_name",
-        $"class_type_id", $"class3_name")
+        $"class_type_id", $"class3_name",
+        $"ad_seat_img")
       .createOrReplaceTempView("aaa")
 
-    spark.sql("cache table aaa")
+    spark.sql(
+      """
+        |select
+        |aaa.video_id,
+        |aaa.media_name,
+        |aaa.ad_seat_b_time,
+        |aaa.ad_seat_e_time,
+        |aaa.drama_name,
+        |aaa.drama_type_name,
+        |aaa.media_area_name,
+        |aaa.media_release_date,
+        |aaa.class2_name,
+        |aaa.class_type_id,
+        |aaa.class3_name,
+        |aaa.ad_seat_img
+        |from aaa join bbb
+        |on aaa.video_id=bbb.video_id
+        |""".stripMargin)
+      .createOrReplaceTempView("ccc")
 
-    val mysqlRDD = spark.sql("select * from aaa")
+    spark.sql("cache table ccc")
+
+    val mysqlRDD = spark.sql("select * from ccc")
       .toJSON
       .rdd
 
     val reduced = mysqlRDD
       .filter(x => {
         val key = JSON.parseObject(x).get("class_type_id").toString
-        !key.equals("9")
+        key.equals("1") || key.equals("2") || key.equals("3") || key.equals("4")
       })
       // 处理数据为json格式，以video_id为key的元组
       .map(x => {
@@ -78,13 +108,84 @@ object VideoCutMain extends Logging {
 
       /**
        * 预处理逻辑
-       * 1、
+       * 1、将所有的起止点，扩展3秒
+       * 2、根据vid和class3Name分组，将一样的分到一个组
+       * 3、按起点排序，得到所有标签的容器 adseatList
+       * 4、遍历adseatList，创建一个空的标签位，和一个resultList
+       * 5、如果adseattemp是null，则添加一个新的adseattemp，
+       * 如果不为null，则判断两个能否合并，能合并则合并了等下一个标签，
+       * 如果不能合并，则输出已合并的标签，然后将新标签设置为新的adseat
+       * 6、返回resultList
+       *
        */
       .map(x => {
-        x
+        val vid = x._1
+        val adseatJsonArray = x._2
+        // 将时间点增大
+        val adseatList = adseatJsonArray.toArray.map(adseatjson => {
+          val nObject = JSON.parseObject(adseatjson.toString)
+          val oldbtime = nObject.get("ad_seat_b_time").toString.toLong
+          val oldetime = nObject.get("ad_seat_e_time").toString.toLong
+
+          val newbtime = if (oldbtime.toLong - 5000 < 0) {
+            0
+          }
+          else {
+            (oldbtime.toLong - 5000)
+          }
+
+          val newetime = oldetime.toLong + 5000
+
+          nObject.put("ad_seat_b_time", newbtime.toString)
+          nObject.put("ad_seat_e_time", newetime.toString)
+
+          nObject
+        }).sortBy(y => y.get("ad_seat_b_time").toString.toLong)
+
+
+
+        val resultList = new JSONArray()
+//
+        for (i<- 0 until adseatList.size){
+          resultList.add(adseatList(i))
+        }
+        (vid,resultList)
+
+
+//        var adseatTemp: JSONObject = null
+//
+//        for (i <- 0 until adseatList.size) {
+//
+//          if (adseatTemp == null) {
+//            adseatTemp = adseatList(i).clone().asInstanceOf[JSONObject]
+//          } else {
+//
+//
+//            val tempETime = adseatTemp.get("ad_seat_e_time").toString.toLong
+//            val adseatBTime = adseatList(i).get("ad_seat_b_time").toString.toLong
+//
+//            val adseatETime = adseatList(i).get("ad_seat_e_time").toString
+//
+//            if (adseatBTime - tempETime < 0) {
+//              // 合并广告位，然后继续等待下一个标签
+//
+//              adseatTemp.put("ad_seat_e_time", adseatETime)
+//
+//            } else {
+//              // 不合并，输出已有的广告位
+//              resultList.add(adseatTemp.clone().asInstanceOf[JSONObject])
+//              adseatTemp = null
+//            }
+//
+//          }
+//
+//        }
+//        (vid, resultList)
       })
-      // 核心逻辑
+
       /**
+       * 核心逻辑
+       *
        * 对拿到的同一个video_id的一组视频进行处理
        * 将所有标签放到一个adseatMap中
        * 将所有起止点放到一个pointlist中
@@ -173,6 +274,11 @@ object VideoCutMain extends Logging {
             val action2List = new JSONArray()
             val sence2List = new JSONArray()
 
+            val manImgList = new JSONArray()
+            val objectImgList = new JSONArray()
+            val actionImgList = new JSONArray()
+            val senceImgList = new JSONArray()
+
             for (key <- keys) {
 
               val thisObj: JSONObject = tempMap(key)
@@ -185,32 +291,37 @@ object VideoCutMain extends Logging {
               val file7 = thisObj.get("class_type_id").toString
               val file8 = thisObj.get("class3_name").asInstanceOf[String]
               val file9 = thisObj.get("class2_name").asInstanceOf[String]
+              val file10 = thisObj.get("ad_seat_img").asInstanceOf[String]
 
               tempJsonObj.put("string_vid", file1)
-              tempJsonObj.put("string_media_name", file2)
+              tempJsonObj.put("media_name", file2)
               tempJsonObj.put("string_drama_name", file3)
               tempJsonObj.put("string_drama_type_name", file4)
               tempJsonObj.put("string_media_area_name", file5)
               tempJsonObj.put("string_media_release_date", file6)
-              tempJsonObj.put("string_time", (beginTime + "-" + endTime))
+              tempJsonObj.put("string_time", (beginTime + "_" + endTime))
               tempJsonObj.put("string_time_long", (endTime.toLong - beginTime.toLong).toString)
 
               file7 match {
                 case "4" => {
                   manList.add(file8)
                   man2List.add(file9)
+                  manImgList.add(file10)
                 }
                 case "1" => {
                   objectList.add(file8)
                   object2List.add(file9)
+                  objectImgList.add(file10)
                 }
                 case "3" => {
                   actionList.add(file8)
                   action2List.add(file9)
+                  actionImgList.add(file10)
                 }
                 case "2" => {
                   senceList.add(file8)
                   sence2List.add(file9)
+                  senceImgList.add(file10)
                 }
               }
 
@@ -225,6 +336,11 @@ object VideoCutMain extends Logging {
             tempJsonObj.put("string_object2_list", object2List)
             tempJsonObj.put("string_action2_list", action2List)
             tempJsonObj.put("string_sence2_list", sence2List)
+
+            tempJsonObj.put("string_man_img_list", manImgList)
+            tempJsonObj.put("string_object_img_list", objectImgList)
+            tempJsonObj.put("string_action_img_list", actionImgList)
+            tempJsonObj.put("string_sence_img_list", senceImgList)
 
             resultList += ((adseatKey, tempJsonObj))
 

@@ -13,8 +13,8 @@ object AdxDataPvSuccessAll extends Logging {
 
     logWarning("AdxDataPvSuccess开始运行")
 
-    val confUtil = new ConfUtils("application.conf")
-//            val confUtil = new ConfUtils("线上application.conf")
+//    val confUtil = new ConfUtils("application.conf")
+            val confUtil = new ConfUtils("线上application.conf")
 
     confUtil.nowTime = new SimpleDateFormat("yyyyMMdd").format(new Date().getTime - 86400L * 1000)
     val nowMouth = confUtil.nowTime.substring(0, 6)

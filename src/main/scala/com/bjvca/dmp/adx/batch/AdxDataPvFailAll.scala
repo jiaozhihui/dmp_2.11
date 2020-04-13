@@ -13,10 +13,11 @@ object AdxDataPvFailAll extends Logging {
 
     logWarning("AdxDataPvFail开始运行")
 
-    val confUtil = new ConfUtils("application.conf")
-//            val confUtil = new ConfUtils("线上application.conf")
+//    val confUtil = new ConfUtils("application.conf")
+            val confUtil = new ConfUtils("线上application.conf")
 
     confUtil.nowTime = new SimpleDateFormat("yyyyMMdd").format(new Date().getTime - 86400L * 1000)
+//    confUtil.nowTime = "20200130"
     val nowMouth = confUtil.nowTime.substring(0, 6)
 
     val sparkSql = SparkSession.builder()
@@ -42,6 +43,7 @@ object AdxDataPvFailAll extends Logging {
         |SUBSTRING_INDEX(DSPName,'_',-1) as dsp_id,
         |CONCAT(left(`local-month`,4),"-",right(`local-month`,2),"-",first(`local-day`)) as daytime,
         |FIRST(media_channel_id) as media_channel_id,
+        |FIRST(options.body.imp[0].tagid) as tag_id,
         |SUBSTRING_INDEX(FIRST(options.body.imp[0].tagid),'_',-1) as tag_id_channel,
         |IFNULL(SUM(isReturn),0) as return,
         |IFNULL(SUM(isTimeOut),0) as timeout,
@@ -57,6 +59,7 @@ object AdxDataPvFailAll extends Logging {
         |a.daytime,
         |IFNULL(b.media_id,"000") AS media_id,
         |a.media_channel_id,
+        |a.tag_id,
         |a.tag_id_channel,
         |a.return,
         |a.timeout,
@@ -70,8 +73,8 @@ object AdxDataPvFailAll extends Logging {
         var conn: Connection = null
         var ps: PreparedStatement = null
         val updateSQL =
-          """INSERT INTO adx_data_pv_fail(dsp_id, `daytime`, media_id, media_channel_id, tag_id_channel, `return`, `timeout`, `else_error`, `total`)
-            |VALUES(?,?,?,?,?,?,?,?,?)
+          """INSERT INTO adx_data_pv_fail(dsp_id, `daytime`, media_id, media_channel_id, tag_id_channel, `return`, `timeout`, `else_error`, `total`,tag_id)
+            |VALUES(?,?,?,?,?,?,?,?,?,?)
             |ON DUPLICATE KEY UPDATE
             |`return`=?,
             |`timeout`=?,
@@ -96,10 +99,12 @@ object AdxDataPvFailAll extends Logging {
             ps.setInt(7, it.getAs[Long]("timeout").intValue())
             ps.setInt(8, it.getAs[Long]("else_error").intValue())
             ps.setInt(9, it.getAs[Long]("total").intValue())
-            ps.setInt(10, it.getAs[Long]("return").intValue())
-            ps.setInt(11, it.getAs[Long]("timeout").intValue())
-            ps.setInt(12, it.getAs[Long]("else_error").intValue())
-            ps.setInt(13, it.getAs[Long]("total").intValue())
+            ps.setString(10, it.getAs[String]("tag_id"))
+            ps.setInt(11, it.getAs[Long]("return").intValue())
+            ps.setInt(12, it.getAs[Long]("timeout").intValue())
+            ps.setInt(13, it.getAs[Long]("else_error").intValue())
+            ps.setInt(14, it.getAs[Long]("total").intValue())
+
             ps.addBatch()
             row = row + 1
             if (row % 1000 == 0) {
